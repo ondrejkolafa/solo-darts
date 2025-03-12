@@ -1,0 +1,34 @@
+services:
+  darts:
+    build: ./backend/
+    depends_on:
+      - db
+    volumes:
+      - ./backend/app:/app/app
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:adminpwd@db:5432/darts
+    ports:
+      - "8000:8000"
+
+
+  db:
+      image: postgres:15-alpine
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d darts"]
+        interval: 10s
+        retries: 5
+        start_period: 30s
+        timeout: 10s
+      volumes:
+        - postgres_data:/var/lib/postgresql/data/
+      expose:
+        - 5432
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=adminpwd
+        - POSTGRES_DB=darts
+      ports:
+        - "5432:5432"
+
+volumes:
+      postgres_data: 
