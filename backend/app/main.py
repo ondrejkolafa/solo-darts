@@ -4,6 +4,7 @@ from app.darts import models
 from app.database import engine
 from app.routes import api_router
 
+models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
