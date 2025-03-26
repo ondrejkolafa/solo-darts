@@ -3,16 +3,18 @@ from pydantic import BaseModel
 
 
 class GameType(str, Enum):
-    g_501 = "501"
-    g_cricket = "cricket"
+    G_501 = "501"
+    G_CRICKET = "cricket"
+
 
 class GameStatus(int, Enum):
-    in_progress = 0
-    finished = 1
+    IN_PROGRESS = 0
+    FINISHED = 1
 
 
 class Game(BaseModel):
     game_type: GameType
-    status: GameStatus = GameStatus.in_progress
+    status: GameStatus = GameStatus.IN_PROGRESS
     description: str | None = None
     rounds:int = 15
+    game_data:dict = {}

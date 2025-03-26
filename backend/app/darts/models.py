@@ -10,4 +10,5 @@ class DbGame(Base):
     status = Column(Integer,nullable=False)
     description = Column(String,nullable=True)
     rounds = Column(Integer, default=15)
+    game_data = Column(JSON,nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
