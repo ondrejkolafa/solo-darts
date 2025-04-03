@@ -1,65 +1,51 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session, select
 from typing import List
 
-from app.darts.schemas import Game, GameCreate
-from app.darts import models
-from app.database import get_db
+from app.darts.models import Game, GameCreate, GameRead, GameUpdate
+from app.database import get_session
 
 
 router = APIRouter(prefix="/games", tags=["games"])
 
 
-@router.get("/games/", response_model=List[Game])
-async def get_games(db: Session = Depends(get_db)):
-    games = db.query(models.DbGame).all()
+@router.get("/games/", response_model=List[GameRead])
+async def get_games(*, session: Session = Depends(get_session)) -> List[GameRead]:
+    """Get all games"""
+    statement = select(Game)
+    results = session.exec(statement)
+    games = results.all()
     return games
 
 
-@router.post("/game/")
-async def create_game(post_game: GameCreate, db: Session = Depends(get_db)) -> List[Game]:
+@router.post("/game/", response_model=GameRead)
+async def create_game(post_game: GameCreate, session: Session = Depends(get_session)) -> GameRead:
+    """Create a new game"""
+    db_game = Game.model_validate(post_game)
+    db_game.created_at = datetime.now()
+    db_game.modified_at = datetime.now()
+    session.add(db_game)
+    session.commit()
+    session.refresh(db_game)
 
-    new_game = models.DbGame(**post_game.model_dump())
-    new_game.created_at = datetime.now()
-    new_game.modified_at = datetime.now()
-    db.add(new_game)
-    db.commit()
-    db.refresh(new_game)
-
-    return [new_game]
+    return db_game
 
 
-@router.patch("/game/")
-async def update_game(
-    game_id: int, expected: list[int], throws: list[int], db: Session = Depends(get_db)
-) -> List[Game]:
+@router.patch("/game/{game_id}", response_model=GameRead)
+async def update_game(game_id: int, game: GameUpdate, session: Session = Depends(get_session)) -> GameRead:
+    """Update an existing game"""
+    db_game = session.get(Game, game_id)
 
-    if not game_id:
-        return {"error": "game_id is required"}
-    if not expected:
-        return {"error": "expected list is required"}
-    if not throws:
-        return {"error": "throws list is required"}
+    if not db_game:
+        raise HTTPException(status_code=404, detail="Game not found")
 
-    print(f"game_id: {game_id}, expected: {expected}, throws: {throws}")
+    game_data = game.model_dump(exclude_unset=True)
+    db_game.sqlmodel_update(game_data)
+    db_game.modified_at = datetime.now()
 
-    game = db.query(models.DbGame).filter(models.DbGame.id == game_id).first()
-    if throws and expected and game:
-        if game.game_data:
-            print(f"Modifying existing game data: {game.game_data}")
-            game.game_data["round"] += 1
-            game.game_data["expected"] = expected
-            game.game_data["throws"] = throws
-        else:
-            game.game_data = {"round": 1, "expected": expected, "throws": throws}
-            print(f"Creating new game data: {game.game_data}")
-    game.modified_at = datetime.now()
+    session.add(db_game)
+    session.commit()
+    session.refresh(db_game)
 
-    print(f"game: {game.__dict__}")
-
-    db.add(game)
-    db.commit()
-    db.refresh(game)
-
-    return [game]
+    return db_game
