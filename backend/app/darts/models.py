@@ -1,7 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from sqlalchemy import JSON, Column
-from sqlmodel import Field, SQLModel
+from sqlmodel import Column, Field, JSON, SQLModel
 
 
 class GameType(str, Enum):
@@ -14,12 +13,25 @@ class GameStatus(int, Enum):
     FINISHED = 1
 
 
+class Throws(SQLModel):
+    throws: list[str] = Field(
+        default=[],
+        sa_column=Column(JSON),
+        schema_extra={"example": ["D20", "T1", "5"]},
+    )
+    expected: list[str] = Field(
+        default=[],
+        sa_column=Column(JSON),
+        schema_extra={"example": ["20", "20", "20"]},
+    )
+
+
 class GamesBase(SQLModel):
     game_type: GameType = Field(default=GameType.G_501, sa_column_kwargs={"nullable": False})
     status: GameStatus = Field(default=GameStatus.IN_PROGRESS, sa_column_kwargs={"nullable": False})
     description: str | None = Field(default=None, sa_column_kwargs={"nullable": True})
     rounds: int = Field(default=15, sa_column_kwargs={"nullable": False})
-    game_data: dict = Field(default={"round": 0, "expected": [], "throws": []}, sa_column=Column(JSON))
+    throws: list[Throws] = Field(default=[], sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"nullable": False})
     modified_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"nullable": False})
 
@@ -36,7 +48,9 @@ class GameCreate(GamesBase):
     pass
 
 
-class GameUpdate(SQLModel):
-    status: GameStatus | None
-    rounds: int | None
-    game_data: dict | None
+# class GameThrows(SQLModel):
+#     throws: Throws = Field(
+#         default=[],
+#         sa_column=Column(JSON),
+#         schema_extra={"example": {"throws": ["D20", "T1", "5"], "expected": ["20", "20", "20"]}},
+#     )

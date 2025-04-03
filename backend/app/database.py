@@ -28,6 +28,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True, connect_args=connect_
 
 
 def create_db_and_tables():
+    # SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
 
