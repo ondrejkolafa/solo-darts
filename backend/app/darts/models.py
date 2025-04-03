@@ -37,5 +37,6 @@ class GameCreate(GamesBase):
 
 
 class GameUpdate(SQLModel):
+    status: GameStatus | None
     rounds: int | None
     game_data: dict | None

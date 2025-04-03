@@ -7,7 +7,7 @@ from app.darts.models import Game, GameCreate, GameRead, GameUpdate
 from app.database import get_session
 
 
-router = APIRouter(prefix="/games", tags=["games"])
+router = APIRouter(tags=["games"])
 
 
 @router.get("/games/", response_model=List[GameRead])
@@ -16,6 +16,7 @@ async def get_games(*, session: Session = Depends(get_session)) -> List[GameRead
     statement = select(Game)
     results = session.exec(statement)
     games = results.all()
+    print(f"Games: {games}")
     return games
 
 
