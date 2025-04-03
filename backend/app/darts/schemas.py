@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel
 
@@ -12,9 +13,15 @@ class GameStatus(int, Enum):
     FINISHED = 1
 
 
-class Game(BaseModel):
+class GameCreate(BaseModel):
     game_type: GameType
     status: GameStatus = GameStatus.IN_PROGRESS
     description: str | None = None
-    rounds:int = 15
-    game_data:dict = {}
+    rounds: int = 15
+    game_data: dict = {"round": 0, "expected": [], "throws": []}
+
+
+class Game(GameCreate):
+    id: int
+    created_at: datetime
+    modified_at: datetime
